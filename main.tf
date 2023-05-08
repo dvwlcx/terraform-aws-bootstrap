@@ -12,6 +12,42 @@ resource "aws_iam_account_alias" "alias" {
   account_alias = var.account_alias
 }
 
+
+module "terraform_state_bucket" {
+  source = "terraform-aws-modules/s3-bucket/aws"
+
+  bucket = local.state_bucket
+  acl    = "private"
+
+  control_object_ownership = true
+  object_ownership         = "ObjectWriter"
+
+  versioning = {
+    enabled = true
+  }
+
+ depends_on = [
+    module.terraform_state_bucket_logs
+  ]
+
+}
+
+module "terraform_state_bucket_logs" {
+  source = "terraform-aws-modules/s3-bucket/aws"
+
+  bucket = local.logging_bucket
+  acl    = "log-delivery-write"
+
+  # Allow deletion of non-empty bucket
+  force_destroy = true
+
+  control_object_ownership = true
+  object_ownership         = "ObjectWriter"
+
+  #attach_elb_log_delivery_policy = true  # Required for ALB logs
+  #attach_lb_log_delivery_policy  = true  # Required for ALB/NLB logs
+}
+/*
 module "terraform_state_bucket" {
   source  = "trussworks/s3-private-bucket/aws"
   version = "~> 4.3.0"
@@ -32,6 +68,7 @@ module "terraform_state_bucket" {
   ]
 }
 
+
 #
 # Terraform state bucket logging
 #
@@ -47,7 +84,7 @@ module "terraform_state_bucket_logs" {
 
   tags = var.log_bucket_tags
 }
-
+*/
 #
 # Terraform state locking
 #
